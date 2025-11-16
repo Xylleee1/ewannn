@@ -1,0 +1,21 @@
+Name,Category,Quantity,Condition,Status
+Beaker 500ml,Glassware,20,Good,Available
+Test Tube,Glassware,100,Good,Available
+Bunsen Burner,Equipment,15,Good,Available
+Graduated Cylinder 100ml,Measuring Device,25,Good,Available
+Erlenmeyer Flask 250ml,Flask,30,Good,Available
+Microscope,Microscope,10,Good,Available
+Pipette 10ml,Measuring Device,40,Good,Available
+Petri Dish,Glassware,50,Good,Available
+Safety Goggles,Protective Gear,60,Good,Available
+Lab Coat,Protective Gear,40,Good,Available
+Thermometer,Measuring Device,25,Good,Available
+Hot Plate,Equipment,8,Good,Available
+Stirring Rod,Tools,35,Good,Available
+Funnel,Glassware,20,Good,Available
+Weighing Scale,Equipment,5,Good,Available
+pH Meter,Measuring Device,6,Good,Available
+Centrifuge,Equipment,4,Good,Available
+Distilled Water,Reagent,100,Good,Available
+Hydrochloric Acid 1M,Chemical,50,Good,Available
+Sodium Hydroxide 1M,Chemical,50,Good,Available

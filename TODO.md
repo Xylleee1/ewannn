@@ -1,0 +1,4 @@
+- [x] Update JavaScript logic in borrow_request.php for dynamic field display based on category
+- [x] Fix label selector to target the correct label for the second field
+- [x] Ensure field is required when shown, not required when hidden
+- [x] Test the form functionality by launching in browser (PHP server started)

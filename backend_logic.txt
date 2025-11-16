@@ -1,0 +1,23 @@
+PHP File: index.php
+Backend Logic: Handles user login with role-based authentication. For admin/faculty, checks username and password against database. For students with @wmsu.edu.ph emails, auto-registers them on first login using email as username and entered password. Logs successful logins and redirects to dashboard.
+
+PHP File: dashboard.php
+Backend Logic: Fetches and displays statistics based on user role. For admins/assistants: total apparatus, available items, pending requests, active borrowings, total penalties. For faculty: pending approvals, approved requests. For students: total requests, pending/approved status, unpaid penalties. Queries database for counts and sums.
+
+PHP File: view_requests.php
+Backend Logic: Displays borrow requests in a table with filtering and search. For faculty, shows only their assigned requests; for admins/assistants, shows all. Handles approve/reject actions via GET parameters, updates request status in database, and logs the action. Calculates statistics (total, pending, approved, rejected) from database queries.
+
+PHP File: borrow_request.php
+Backend Logic: Processes student borrow request form submission. Validates apparatus availability against requested quantity. Inserts new borrow request into database with all form fields (student_id, faculty_id, apparatus_id, etc.). Logs the request action. Fetches available apparatus and faculty list for dropdowns.
+
+PHP File: manage_inventory.php
+Backend Logic: Displays apparatus inventory with search and filter options. For students, shows only available items; for admins, allows full management. Handles delete action for admins, removing apparatus and related borrow requests. Queries database with optional WHERE clauses for search/filter.
+
+PHP File: return_apparatus.php
+Backend Logic: Lists borrow requests with status 'Approved' or 'Borrowed' for return processing. Displays table with student, apparatus, date/time details. Uses modals for return confirmation, but actual processing is in process_return.php.
+
+PHP File: process_return.php
+Backend Logic: Processes apparatus return via POST form. Updates borrow_requests status to 'Returned', inserts record into returns table. Calculates penalties for late return (50/day) or damaged condition (100), inserts into penalties table if applicable. Fetches and displays recent returns history.
+
+PHP File: includes/db.php
+Backend Logic: Establishes database connection. Contains helper functions like add_log() for activity logging, check_apparatus_availability() for stock validation, calculate_late_penalty() for fee computation, get_user_stats() for dashboard data, and others for sanitization, permissions, notifications, etc.
