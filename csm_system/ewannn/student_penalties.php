@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/header.php';
 
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
-    echo "<p class='text-center mt-5'>Access denied.</p>";
+    echo "<div class='container mt-5'><div class='alert alert-warning text-center'><h4>Access Restricted</h4><p>You do not have permission to view this page.</p></div></div>";
     require_once __DIR__ . '/includes/footer.php';
     exit();
 }
@@ -25,76 +25,105 @@ $penalties = $conn->query("
 ?>
 
 <style>
-    *{
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-.page-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 3px solid #FF6F00;
-}
-.page-header h2 {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-size: 26px;
-    font-weight: 700;
-    margin: 0;
-}
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-.section-card {
-    background: #fff;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
+    .page-header {
+        margin-bottom: 28px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #FF6F00;
+    }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-.table thead {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    color: #fff;
-}
-.table th, .table td {
-    padding: 14px 16px;
-    text-align: left;
-    font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
-}
-.table tbody tr:hover {
-    background: #fff5eb;
-}
+    .page-header h2 {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0;
+    }
 
-.status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 13px;
-    text-transform: capitalize;
-    display: inline-block;
-}
-.badge-paid { 
-    background: #16A34A; /* green */
-    color: #fff; 
-    font-weight: 300; /* optional if you want lighter text */
-}
-.badge-pending { background: #FFC107; color: #111827; }
-.badge-approved { background: #16A34A; color: #fff; }
-.badge-rejected { background: #E11D48; color: #fff; }
-.badge-released { background: #0EA5E9; color: #fff; }
-.badge-returned { background: #7C3AED; color: #fff; }
+    .section-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-.empty-state {
-    text-align: center;
-    color: #999;
-    padding: 40px 20px;
-    font-style: italic;
-}
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .table thead {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        color: #fff;
+    }
+
+    .table th,
+    .table td {
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 14px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .table tbody tr:hover {
+        background: #fff5eb;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: capitalize;
+        display: inline-block;
+    }
+
+    .badge-paid {
+        background: #16A34A;
+        /* green */
+        color: #fff;
+        font-weight: 300;
+        /* optional if you want lighter text */
+    }
+
+    .badge-pending {
+        background: #FFC107;
+        color: #111827;
+    }
+
+    .badge-approved {
+        background: #16A34A;
+        color: #fff;
+    }
+
+    .badge-rejected {
+        background: #E11D48;
+        color: #fff;
+    }
+
+    .badge-released {
+        background: #0EA5E9;
+        color: #fff;
+    }
+
+    .badge-returned {
+        background: #7C3AED;
+        color: #fff;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #999;
+        padding: 40px 20px;
+        font-style: italic;
+    }
 </style>
 
 <div class="page-header">
@@ -117,37 +146,37 @@ $penalties = $conn->query("
                 </tr>
             </thead>
             <tbody>
-            <?php if ($penalties && $penalties->num_rows > 0): ?>
-                <?php while ($p = $penalties->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= $p['penalty_id'] ?></td>
-                        <td><?= htmlspecialchars($p['apparatus_name'] ?? '-') ?></td>
-                        <td><?= $p['transaction_id'] ?></td>
-                        <td>₱<?= number_format($p['amount'], 2) ?></td>
-                        <td><?= htmlspecialchars($p['reason']) ?></td>
-                        <td><?= date('M d, Y', strtotime($p['date_imposed'])) ?></td>
-                        <td>
-                            <?php
+                <?php if ($penalties && $penalties->num_rows > 0): ?>
+                    <?php while ($p = $penalties->fetch_assoc()): ?>
+                        <tr>
+                            <td><?= $p['penalty_id'] ?></td>
+                            <td><?= htmlspecialchars($p['apparatus_name'] ?? '-') ?></td>
+                            <td><?= $p['transaction_id'] ?></td>
+                            <td>₱<?= number_format($p['amount'], 2) ?></td>
+                            <td><?= htmlspecialchars($p['reason']) ?></td>
+                            <td><?= date('M d, Y', strtotime($p['date_imposed'])) ?></td>
+                            <td>
+                                <?php
                                 $status = strtolower($p['status'] ?? 'pending');
-                                $badge_class = match($status) {
+                                $badge_class = match ($status) {
                                     'pending' => 'badge-pending',
                                     'approved' => 'badge-approved',
                                     'rejected' => 'badge-rejected',
                                     'released' => 'badge-released',
-                                    'paid' => 'badge-paid', 
+                                    'paid' => 'badge-paid',
                                     'returned' => 'badge-returned',
                                     default => 'badge-pending'
                                 };
                                 echo "<span class='status-badge $badge_class'>" . ucfirst($status) . "</span>";
-                            ?>
-                        </td>
+                                ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" class="empty-state">No penalties found.</td>
                     </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="7" class="empty-state">No penalties found.</td>
-                </tr>
-            <?php endif; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>

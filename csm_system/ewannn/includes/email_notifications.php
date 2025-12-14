@@ -8,20 +8,21 @@
  */
 
 // Include PHPMailer
-require_once './PHPMailer/PHPMailer.php';
-require_once './PHPMailer/SMTP.php';
-require_once './PHPMailer/Exception.php';
+require_once __DIR__ . '/../PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../PHPMailer/SMTP.php';
+require_once __DIR__ . '/../PHPMailer/Exception.php';
 require_once 'email_config.php';
 
 // Email configuration
 define('SYSTEM_EMAIL', 'noreply@csm.wmsu.edu.ph');
 define('SYSTEM_NAME', 'CSM Apparatus Borrowing System');
-define('SYSTEM_URL', 'http://localhost/csm_apparatus_system'); // Update in production
+define('SYSTEM_URL', 'http://localhost/csm_system/ewannn'); // Use correct localhost path
 
 /**
  * Send HTML email with CSM branding using PHPMailer
  */
-function send_csm_email($to_email, $to_name, $subject, $message) {
+function send_csm_email($to_email, $to_name, $subject, $message)
+{
     // Validate email
     if (!filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
         error_log("Invalid email address: $to_email");
@@ -86,7 +87,10 @@ function send_csm_email($to_email, $to_name, $subject, $message) {
 /**
  * HTML Email Template with WMSU/CSM Branding
  */
-function get_email_template($recipient_name, $message_content, $subject) {
+function get_email_template($recipient_name, $message_content, $subject)
+{
+    $system_url = SYSTEM_URL;
+
     return <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -202,7 +206,7 @@ function get_email_template($recipient_name, $message_content, $subject) {
             </div>
             
             <div class="button-container">
-                <a href="{SYSTEM_URL}/dashboard.php" class="btn-primary">
+                <a href="$system_url/dashboard.php" class="btn-primary">
                     View My Dashboard
                 </a>
             </div>
@@ -230,7 +234,8 @@ HTML;
 /**
  * Send notification when request is submitted
  */
-function notify_request_submitted($conn, $request_id) {
+function notify_request_submitted($conn, $request_id)
+{
     $query = "
         SELECT 
             br.*,
@@ -245,12 +250,13 @@ function notify_request_submitted($conn, $request_id) {
         LEFT JOIN users f ON br.faculty_id = f.user_id
         WHERE br.request_id = $request_id
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $data = mysqli_fetch_assoc($result);
-    
-    if (!$data) return false;
-    
+
+    if (!$data)
+        return false;
+
     // Email to student (confirmation)
     $student_subject = "CSM - Borrow Request Submitted Successfully";
     $student_message = "
@@ -275,9 +281,9 @@ function notify_request_submitted($conn, $request_id) {
             <li>Once approved, proceed to the laboratory at your scheduled time</li>
         </ul>
     ";
-    
+
     send_csm_email($data['student_email'], $data['student_name'], $student_subject, $student_message);
-    
+
     // Email to faculty (notification)
     if ($data['faculty_email']) {
         $faculty_subject = "CSM - New Borrow Request for Your Approval";
@@ -296,17 +302,18 @@ function notify_request_submitted($conn, $request_id) {
             
             <p>Please review and approve this request at your earliest convenience.</p>
         ";
-        
+
         send_csm_email($data['faculty_email'], $data['faculty_name'], $faculty_subject, $faculty_message);
     }
-    
+
     return true;
 }
 
 /**
  * Send notification when request is approved
  */
-function notify_request_approved($conn, $request_id) {
+function notify_request_approved($conn, $request_id)
+{
     $query = "
         SELECT 
             br.*,
@@ -318,12 +325,13 @@ function notify_request_approved($conn, $request_id) {
         JOIN apparatus a ON br.apparatus_id = a.apparatus_id
         WHERE br.request_id = $request_id
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $data = mysqli_fetch_assoc($result);
-    
-    if (!$data) return false;
-    
+
+    if (!$data)
+        return false;
+
     $subject = "✓ CSM - Your Borrow Request Has Been Approved";
     $message = "
         <p style='color: #16A34A; font-weight: 600; font-size: 16px;'>
@@ -352,14 +360,15 @@ function notify_request_approved($conn, $request_id) {
             ⚠️ Please arrive on time. Late arrivals may result in cancellation of your reservation.
         </p>
     ";
-    
+
     return send_csm_email($data['student_email'], $data['student_name'], $subject, $message);
 }
 
 /**
  * Send notification when request is rejected
  */
-function notify_request_rejected($conn, $request_id) {
+function notify_request_rejected($conn, $request_id)
+{
     $query = "
         SELECT 
             br.*,
@@ -371,12 +380,13 @@ function notify_request_rejected($conn, $request_id) {
         JOIN apparatus a ON br.apparatus_id = a.apparatus_id
         WHERE br.request_id = $request_id
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $data = mysqli_fetch_assoc($result);
-    
-    if (!$data) return false;
-    
+
+    if (!$data)
+        return false;
+
     $subject = "CSM - Borrow Request Status Update";
     $message = "
         <p>We regret to inform you that your borrow request has been <strong>rejected</strong>.</p>
@@ -398,14 +408,15 @@ function notify_request_rejected($conn, $request_id) {
         
         <p>If you believe this was done in error, please contact the laboratory administration immediately.</p>
     ";
-    
+
     return send_csm_email($data['student_email'], $data['student_name'], $subject, $message);
 }
 
 /**
  * Send notification when apparatus is released
  */
-function notify_apparatus_released($conn, $request_id) {
+function notify_apparatus_released($conn, $request_id)
+{
     $query = "
         SELECT 
             br.*,
@@ -419,12 +430,13 @@ function notify_apparatus_released($conn, $request_id) {
         JOIN transactions t ON t.request_id = br.request_id
         WHERE br.request_id = $request_id
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $data = mysqli_fetch_assoc($result);
-    
-    if (!$data) return false;
-    
+
+    if (!$data)
+        return false;
+
     $subject = "CSM - Apparatus Released - Return Reminder";
     $message = "
         <p>The apparatus has been <strong>released</strong> to you. Please take note of the return details below.</p>
@@ -457,16 +469,17 @@ function notify_apparatus_released($conn, $request_id) {
             <li>Lost Item: Full replacement cost</li>
         </ul>
     ";
-    
+
     return send_csm_email($data['student_email'], $data['student_name'], $subject, $message);
 }
 
 /**
  * Send return reminder (1 day before due date)
  */
-function send_return_reminders($conn) {
+function send_return_reminders($conn)
+{
     $tomorrow = date('Y-m-d', strtotime('+1 day'));
-    
+
     $query = "
         SELECT 
             br.*,
@@ -479,10 +492,10 @@ function send_return_reminders($conn) {
         WHERE br.status = 'released'
         AND DATE(br.date_needed) = '$tomorrow'
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $count = 0;
-    
+
     while ($data = mysqli_fetch_assoc($result)) {
         $subject = "⏰ CSM - Return Reminder: Apparatus Due Tomorrow";
         $message = "
@@ -508,21 +521,22 @@ function send_return_reminders($conn) {
                 Remember: Late returns will incur a penalty of ₱50.00 per day.
             </p>
         ";
-        
+
         if (send_csm_email($data['student_email'], $data['student_name'], $subject, $message)) {
             $count++;
         }
     }
-    
+
     return $count;
 }
 
 /**
  * Send overdue notices
  */
-function send_overdue_notices($conn) {
+function send_overdue_notices($conn)
+{
     $today = date('Y-m-d');
-    
+
     $query = "
         SELECT 
             br.*,
@@ -536,13 +550,13 @@ function send_overdue_notices($conn) {
         WHERE br.status = 'released'
         AND br.date_needed < '$today'
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $count = 0;
-    
+
     while ($data = mysqli_fetch_assoc($result)) {
         $penalty = $data['days_overdue'] * 50; // ₱50 per day
-        
+
         $subject = "🚨 URGENT: CSM - Overdue Apparatus Return Notice";
         $message = "
             <p style='color: #E11D48; font-weight: 700; font-size: 16px;'>
@@ -576,19 +590,20 @@ function send_overdue_notices($conn) {
             
             <p>Please return the apparatus immediately to minimize penalties.</p>
         ";
-        
+
         if (send_csm_email($data['student_email'], $data['student_name'], $subject, $message)) {
             $count++;
         }
     }
-    
+
     return $count;
 }
 
 /**
  * Send penalty notification
  */
-function notify_penalty_issued($conn, $penalty_id) {
+function notify_penalty_issued($conn, $penalty_id)
+{
     $query = "
         SELECT 
             p.*,
@@ -603,12 +618,13 @@ function notify_penalty_issued($conn, $penalty_id) {
         JOIN apparatus a ON br.apparatus_id = a.apparatus_id
         WHERE p.penalty_id = $penalty_id
     ";
-    
+
     $result = mysqli_query($conn, $query);
     $data = mysqli_fetch_assoc($result);
-    
-    if (!$data) return false;
-    
+
+    if (!$data)
+        return false;
+
     $subject = "CSM - Penalty Notice: Payment Required";
     $message = "
         <p>A penalty has been issued for your recent apparatus borrowing transaction.</p>
@@ -637,14 +653,15 @@ function notify_penalty_issued($conn, $penalty_id) {
             ⚠️ Outstanding penalties may affect your ability to borrow apparatus in the future.
         </p>
     ";
-    
+
     return send_csm_email($data['student_email'], $data['student_name'], $subject, $message);
 }
 
 /**
  * Bulk send notification to multiple users
  */
-function send_bulk_notification($conn, $recipient_type, $subject, $message_body) {
+function send_bulk_notification($conn, $recipient_type, $subject, $message_body)
+{
     error_log("Bulk notification: recipient_type = $recipient_type");
 
     $query = "";
@@ -697,20 +714,112 @@ function send_bulk_notification($conn, $recipient_type, $subject, $message_body)
 }
 
 // Cron job function - run daily
-function run_daily_email_notifications($conn) {
+function run_daily_email_notifications($conn)
+{
     echo "Running daily email notifications...\n";
-    
+
     // Send return reminders
     $reminders_sent = send_return_reminders($conn);
     echo "Return reminders sent: $reminders_sent\n";
-    
+
     // Send overdue notices
     $overdue_sent = send_overdue_notices($conn);
     echo "Overdue notices sent: $overdue_sent\n";
-    
+
     return [
         'reminders' => $reminders_sent,
         'overdue' => $overdue_sent
     ];
+}
+// Send immediate penalty notification
+function sendPenaltyNotification($user_id, $amount, $reason)
+{
+    global $conn;
+
+    // 1. Fetch student info
+    $stmt = mysqli_prepare($conn, "SELECT full_name, email FROM users WHERE user_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+
+    if (!($user = mysqli_fetch_assoc($res))) {
+        error_log("sendPenaltyNotification Error: User ID $user_id not found.");
+        return;
+    }
+
+    // 2. Insert notification into DB
+    // Since we are in email_notifications.php, we can call create_notification if available, 
+    // or just insert directly. The function create_notification is in notifications.php, 
+    // which includes this file. However, header.php includes notifications.php, 
+    // so if this function is called, notifications.php (and create_notification) MIGHT be available.
+    // To be safe and avoid dependency issues if called in isolation, we will check availability.
+
+    $title = "Penalty Issued";
+    $message = "You have been issued a penalty of ₱" . number_format($amount, 2) . " due to " . $reason . ".";
+    $link = 'student_penalties.php';
+
+    if (function_exists('create_notification')) {
+        create_notification($user_id, $title, $message, 'danger', 0, 'penalty', $link);
+    } else {
+        // Fallback insert if create_notification not loaded
+        $notif_stmt = mysqli_prepare($conn, "INSERT INTO user_notifications (user_id, title, message, type, link, related_type) VALUES (?, ?, ?, 'danger', ?, 'penalty')");
+        mysqli_stmt_bind_param($notif_stmt, "isss", $user_id, $title, $message, $link);
+        mysqli_stmt_execute($notif_stmt);
+    }
+
+    // 3. Send Email
+    $subject = "Penalty Notice – CSM Apparatus Borrowing System";
+    $date_issued = date('F d, Y');
+
+    $email_body = "
+        <h3>Penalty Issued</h3>
+        <p>Dear <strong>{$user['full_name']}</strong>,</p>
+        <p>You have been issued a penalty by the CSM Laboratory for the following reason:</p>
+        <ul style='background: #f9f9f9; padding: 15px; border-left: 4px solid #F44336;'>
+            <li><strong>Amount:</strong> ₱" . number_format($amount, 2) . "</li>
+            <li><strong>Reason:</strong> {$reason}</li>
+            <li><strong>Date Issued:</strong> {$date_issued}</li>
+        </ul>
+        <p>Please check the <a href='" . SYSTEM_URL . "/student_penalties.php'>CSM Apparatus Borrowing System</a> for more details.</p>
+        <p>Please settle this amount at the cashier or laboratory office as soon as possible.</p>
+        <br>
+        <p><small>This is an automated message.</small></p>
+    ";
+
+    // Use send_csm_email which is in this file
+    if (!empty($user['email'])) {
+        send_csm_email($user['email'], $user['full_name'], $subject, $email_body);
+    }
+}
+
+/**
+ * Send OTP for Password Reset
+ */
+function send_otp_email($email, $otp)
+{
+    // We need to fetch the user's name first for the template
+    global $conn;
+    // Basic check if $conn is available, otherwise try to require it
+    // In this context, it's usually included.
+
+    $name = "User"; // Fallback
+    // Assuming we can't query cleanly here without $conn passed or global, 
+    // but the email function handles the name for the template.
+    // If we want the name in the email body, we can just use "User" or query if we really want to.
+
+    $subject = "Your Password Reset OTP Code";
+    $message = "
+        <p>You have requested to reset your password.</p>
+        <p>Please use the following One-Time Password (OTP) to verify your identity:</p>
+        
+        <div style='background: #f0f0f0; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;'>
+            <h1 style='letter-spacing: 5px; color: #FF6600; margin: 0; font-size: 32px;'>$otp</h1>
+        </div>
+        
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you did not request a password reset, please ignore this email.</p>
+    ";
+
+    return send_csm_email($email, $name, $subject, $message);
 }
 ?>

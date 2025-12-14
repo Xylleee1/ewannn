@@ -2,18 +2,26 @@
 require_once __DIR__ . '/email_notifications.php';
 
 // Create notification for user
-function create_notification($user_id, $title, $message, $type = 'info', $related_id = null, $related_type = null) {
+function create_notification($user_id, $title, $message, $type = 'info', $related_id = null, $related_type = null, $link = null)
+{
     global $conn;
 
-    $stmt = mysqli_prepare($conn, "INSERT INTO user_notifications (user_id, title, message, type, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "isssis", $user_id, $title, $message, $type, $related_id, $related_type);
+    // If link is not provided, try to generate it based on type and user role (fallback)
+    if (empty($link)) {
+        $link = '#'; // Default fallback
+        // We could do dynamic generation here too, but clear parameters are better.
+    }
+
+    $stmt = mysqli_prepare($conn, "INSERT INTO user_notifications (user_id, title, message, type, related_id, related_type, link) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, "isssiss", $user_id, $title, $message, $type, $related_id, $related_type, $link);
     mysqli_stmt_execute($stmt);
 
     return mysqli_stmt_insert_id($stmt);
 }
 
 // Get unread notification count for user
-function get_unread_notification_count($user_id) {
+function get_unread_notification_count($user_id)
+{
     global $conn;
 
     $result = mysqli_query($conn, "SELECT COUNT(*) as count FROM user_notifications WHERE user_id = $user_id AND is_read = 0");
@@ -22,7 +30,8 @@ function get_unread_notification_count($user_id) {
 }
 
 // Get notifications for user
-function get_user_notifications($user_id, $limit = 20) {
+function get_user_notifications($user_id, $limit = 20)
+{
     global $conn;
 
     $result = mysqli_query($conn, "
@@ -40,22 +49,58 @@ function get_user_notifications($user_id, $limit = 20) {
     return $notifications;
 }
 
+// Helper to get notification link
+function get_notification_link($notification, $role = '')
+{
+    // If link is already present and valid, use it
+    if (!empty($notification['link']) && $notification['link'] !== '#') {
+        return $notification['link'];
+    }
+
+    // Otherwise generate based on type and role
+    switch ($notification['related_type']) {
+        case 'borrow_request':
+        case 'approval':
+            return ($role === 'student')
+                ? 'request_tracker.php?id=' . $notification['related_id']
+                : 'view_requests.php?id=' . $notification['related_id'];
+
+        case 'user':
+            return 'manage_users.php';
+
+        case 'apparatus':
+            return 'manage_inventory.php';
+
+        case 'penalty':
+            return ($role === 'student') ? 'student_penalties.php' : 'penalties.php';
+
+        case 'transaction':
+            return ($role === 'student') ? 'request_tracker.php' : 'transactions.php';
+
+        default:
+            return '#';
+    }
+}
+
 // Mark notification as read
-function mark_notification_read($notification_id, $user_id) {
+function mark_notification_read($notification_id, $user_id)
+{
     global $conn;
 
     mysqli_query($conn, "UPDATE user_notifications SET is_read = 1 WHERE notification_id = $notification_id AND user_id = $user_id");
 }
 
 // Mark all notifications as read for user
-function mark_all_notifications_read($user_id) {
+function mark_all_notifications_read($user_id)
+{
     global $conn;
 
     mysqli_query($conn, "UPDATE user_notifications SET is_read = 1 WHERE user_id = $user_id AND is_read = 0");
 }
 
 // Send email notification
-function send_email_notification($to_email, $subject, $message, $from_name = 'CSM Laboratory System') {
+function send_email_notification($to_email, $subject, $message, $from_name = 'CSM Laboratory System')
+{
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
     $headers .= "From: $from_name <noreply@csm.edu.ph>" . "\r\n";
@@ -92,7 +137,8 @@ function send_email_notification($to_email, $subject, $message, $from_name = 'CS
 }
 
 // Generate notification on borrow request submission
-function notify_borrow_request_submitted($request_id) {
+function notify_borrow_request_submitted($request_id)
+{
     global $conn;
 
     $request = mysqli_fetch_assoc(mysqli_query($conn, "
@@ -108,13 +154,15 @@ function notify_borrow_request_submitted($request_id) {
         // Notify admin/assistant
         $admins = mysqli_query($conn, "SELECT user_id FROM users WHERE role IN ('admin', 'assistant')");
         while ($admin = mysqli_fetch_assoc($admins)) {
+            $link = "view_requests.php?id=$request_id";
             create_notification(
                 $admin['user_id'],
                 'New Borrow Request',
                 "A new borrow request has been submitted by {$request['full_name']} for {$request['apparatus_name']} (Qty: {$request['quantity']}).",
                 'info',
                 $request_id,
-                'borrow_request'
+                'borrow_request',
+                $link
             );
         }
 
@@ -140,9 +188,9 @@ function notify_borrow_request_submitted($request_id) {
 }
 
 
-
 // Generate notification on request denial
-function notify_request_denied($request_id) {
+function notify_request_denied($request_id)
+{
     global $conn;
 
     $request = mysqli_fetch_assoc(mysqli_query($conn, "
@@ -155,13 +203,15 @@ function notify_request_denied($request_id) {
 
     if ($request) {
         // Notify student
+        $link = "request_tracker.php?id=$request_id";
         create_notification(
             $request['student_id'],
             'Request Denied',
             "Your borrow request for {$request['apparatus_name']} has been denied. Please visit the admin office for clarification.",
             'danger',
             $request_id,
-            'borrow_request'
+            'borrow_request',
+            $link
         );
 
         // Send email
@@ -179,7 +229,8 @@ function notify_request_denied($request_id) {
 }
 
 // Generate notification on apparatus return
-function notify_apparatus_returned($request_id) {
+function notify_apparatus_returned($request_id)
+{
     global $conn;
 
     $request = mysqli_fetch_assoc(mysqli_query($conn, "
@@ -192,13 +243,15 @@ function notify_apparatus_returned($request_id) {
 
     if ($request) {
         // Notify student
+        $link = "request_tracker.php?id=$request_id";
         create_notification(
             $request['student_id'],
             'Return Confirmed',
             "You have successfully returned the borrowed {$request['apparatus_name']}. Thank you for using our service.",
             'success',
             $request_id,
-            'borrow_request'
+            'borrow_request',
+            $link
         );
 
         // Send email
@@ -218,7 +271,8 @@ function notify_apparatus_returned($request_id) {
 
 
 // Generate due date reminders
-function send_due_date_reminders() {
+function send_due_date_reminders()
+{
     global $conn;
 
     // Get items due in 24 hours
@@ -234,13 +288,15 @@ function send_due_date_reminders() {
 
     while ($item = mysqli_fetch_assoc($overdue_items)) {
         // Notify student
+        $link = "request_tracker.php?id={$item['request_id']}";
         create_notification(
             $item['student_id'],
             'Due Date Reminder',
             "Your borrowed {$item['apparatus_name']} is due tomorrow. Please make arrangements to return it on time.",
             'warning',
             $item['request_id'],
-            'borrow_request'
+            'borrow_request',
+            $link
         );
 
         // Send email
@@ -274,13 +330,15 @@ function send_due_date_reminders() {
 
     while ($item = mysqli_fetch_assoc($overdue_items)) {
         // Notify student
+        $link = "request_tracker.php?id={$item['request_id']}";
         create_notification(
             $item['student_id'],
             'Overdue Notice',
             "Your borrowed {$item['apparatus_name']} is now overdue. Please return it immediately to avoid additional penalties.",
             'danger',
             $item['request_id'],
-            'borrow_request'
+            'borrow_request',
+            $link
         );
 
         // Send email
@@ -292,7 +350,7 @@ function send_due_date_reminders() {
                 <ul>
                     <li>Apparatus: {$item['apparatus_name']}</li>
                     <li>Due Date: " . date('M d, Y', strtotime($item['date_needed'])) . "</li>
-                    <li>Days Overdue: " . (strtotime($today) - strtotime($item['date_needed'])) / (60*60*24) . "</li>
+                    <li>Days Overdue: " . (strtotime($today) - strtotime($item['date_needed'])) / (60 * 60 * 24) . "</li>
                 </ul>
                 <p>Please return the items immediately to the laboratory to avoid additional penalties. Contact us if you need assistance.</p>
                 <p>Thank you,<br>CSM Laboratory Staff</p>

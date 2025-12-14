@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
@@ -51,46 +51,40 @@ while ($row = mysqli_fetch_assoc($result)) {
                 <div class="text-center py-5">
                     <i class="bi bi-bell-slash display-1 text-muted mb-3"></i>
                     <h4 class="text-muted">No notifications yet</h4>
-                    <p class="text-muted">You'll receive notifications about your borrowing requests and activities here.</p>
+                    <p class="text-muted">You'll receive notifications about your borrowing requests and activities here.
+                    </p>
                 </div>
             <?php else: ?>
                 <div class="card shadow-sm">
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
-                            <?php foreach ($notifications as $notification): ?>
-                                <div class="list-group-item notification-item <?= $notification['is_read'] ? '' : 'unread' ?>"
-                                     data-id="<?= $notification['notification_id'] ?>">
-                                    <div class="d-flex">
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="flex-grow-1">
-                                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                                        <h6 class="mb-0 notification-title">
-                                                            <?= htmlspecialchars($notification['title']) ?>
-                                                        </h6>
-                                                        <?php if (!$notification['is_read']): ?>
-                                                            <span class="badge bg-primary">New</span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <p class="mb-2 text-muted small">
-                                                        <?= htmlspecialchars($notification['message']) ?>
-                                                    </p>
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <small class="text-muted">
-                                                            <?= date('M d, Y \a\t H:i', strtotime($notification['created_at'])) ?>
-                                                        </small>
-                                                        <?php if ($notification['related_id'] && $notification['related_type']): ?>
-                                                            <a href="#" class="btn btn-sm btn-outline-primary"
-                                                               onclick="viewRelated(<?= $notification['related_id'] ?>, '<?= $notification['related_type'] ?>')">
-                                                                View Details
-                                                            </a>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
+                            <?php foreach ($notifications as $notification):
+                                $link = get_notification_link($notification, $_SESSION['role'] ?? '');
+                                $link = htmlspecialchars($link);
+                                ?>
+                                <a href="<?= $link ?>"
+                                    class="list-group-item list-group-item-action notification-item <?= $notification['is_read'] ? 'read' : 'unread' ?>"
+                                    data-id="<?= $notification['notification_id'] ?>"
+                                    onclick="markReadAndRedirect(event, <?= $notification['notification_id'] ?>, '<?= $link ?>')">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <div class="mb-1">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <h6 class="mb-0 notification-title text-dark">
+                                                    <?= htmlspecialchars($notification['title']) ?>
+                                                </h6>
+                                                <?php if (!$notification['is_read']): ?>
+                                                    <span class="badge bg-primary rounded-pill">New</span>
+                                                <?php endif; ?>
                                             </div>
+                                            <p class="mb-1 text-muted small mt-1">
+                                                <?= htmlspecialchars($notification['message']) ?>
+                                            </p>
                                         </div>
+                                        <small class="text-muted text-nowrap ms-3">
+                                            <?= date('M d, H:i', strtotime($notification['created_at'])) ?>
+                                        </small>
                                     </div>
-                                </div>
+                                </a>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -152,61 +146,111 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <script>
-// Mark notification as read when clicked
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.notification-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const notificationId = this.getAttribute('data-id');
-            if (notificationId) {
-                viewNotification(notificationId);
-            }
-        });
-    });
-});
+    function markReadAndRedirect(event, id, url) {
+        // We only prevent default if we need to do async work before redirecting
+        // But for better UX, we can let the link work naturally if it's just a simple link
+        // However, we want to ensure the read status is marked.
+        // So we will prevent default, send request, then redirect.
+        if (event) event.preventDefault();
 
-// View related item
-function viewRelated(relatedId, relatedType) {
-    switch (relatedType) {
-        case 'borrow_request':
-            window.location.href = 'request_tracker.php?request_id=' + relatedId;
-            break;
-        case 'penalty':
-            window.location.href = 'student_penalties.php';
-            break;
-        default:
-            console.log('Unknown related type:', relatedType);
+        const formData = new FormData();
+        formData.append('notification_id', id);
+        // We need csrf token. It should be available in the page or header.
+        // If header.php is included, getCsrfToken() might be available if defined there.
+        // Or we check for a hidden input.
+        const csrfInput = document.getElementById('csrf_token') || document.querySelector('input[name="csrf_token"]');
+        if (csrfInput) {
+            formData.append('csrf_token', csrfInput.value);
+        }
+
+        // Optimistic UI update
+        const item = event.currentTarget;
+        item.classList.remove('unread');
+        item.classList.add('read');
+        const badge = item.querySelector('.badge');
+        if (badge) badge.remove();
+
+        fetch('ajax/mark_notification_read.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (url && url !== '#' && url !== '') {
+                    window.location.href = url;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (url && url !== '#' && url !== '') {
+                    window.location.href = url;
+                }
+            });
     }
-}
+
+    function markAllAsRead() {
+        if (!confirm('Mark all notifications as read?')) return;
+
+        const csrfInput = document.getElementById('csrf_token') || document.querySelector('input[name="csrf_token"]');
+        const formData = new FormData();
+        if (csrfInput) formData.append('csrf_token', csrfInput.value);
+
+        fetch('ajax/mark_all_read.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+    }
 </script>
 
 <style>
-.notification-item {
-    border-left: 4px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.notification-item:hover {
-    background-color: var(--gray-50);
-}
-
-.notification-item.unread {
-    background: var(--primary-light);
-    border-left-color: var(--primary);
-}
-
-.notification-item.unread .notification-title {
-    font-weight: 600;
-}
-
-@media (max-width: 768px) {
     .notification-item {
-        padding: 1rem 0.75rem;
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        /* remove underline from link */
+        cursor: pointer;
     }
 
-    .notification-title {
-        font-size: 14px;
+    .notification-item:hover {
+        background-color: #f8f9fa;
+        text-decoration: none;
     }
-}
+
+    .notification-item.unread {
+        background-color: #f0f9ff;
+        border-left-color: #0ea5e9;
+    }
+
+    .notification-item.read {
+        background-color: #ffffff;
+        color: #6c757d;
+    }
+
+    .notification-item.unread .notification-title {
+        font-weight: 700;
+        color: #000;
+    }
+
+    .notification-item.read .notification-title {
+        font-weight: 400;
+        color: #495057;
+    }
+
+    @media (max-width: 768px) {
+        .notification-item {
+            padding: 1rem 0.75rem;
+        }
+
+        .notification-title {
+            font-size: 14px;
+        }
+    }
 </style>
 
 <?php require_once 'includes/footer.php'; ?>

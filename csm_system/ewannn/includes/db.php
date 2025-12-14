@@ -4,18 +4,16 @@
  * Secure database connection and utility functions
  */
 
-// Database configuration
-$host = 'localhost';
-$username = 'root';
-$password = '';
-$database = 'csm_apparatus_system';
+// Load configuration
+require_once __DIR__ . '/config.php';
 
 // Create secure connection
-$conn = mysqli_connect($host, $username, $password, $database);
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 // Check connection
 if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+    error_log("Database connection failed: " . mysqli_connect_error());
+    die("Connection error. Please try again later.");
 }
 
 // Set charset to utf8mb4 for security
@@ -23,6 +21,28 @@ mysqli_set_charset($conn, 'utf8mb4');
 
 // Set timezone
 date_default_timezone_set('Asia/Manila');
+
+/**
+ * Input Validation Functions
+ */
+function validate_int($value) {
+    $value = filter_var($value, FILTER_VALIDATE_INT);
+    return ($value !== false && $value > 0) ? $value : false;
+}
+
+function validate_quantity($value, $max = QUANTITY_MAX_LIMIT) {
+    $value = filter_var($value, FILTER_VALIDATE_INT);
+    return ($value !== false && $value > 0 && $value <= $max) ? $value : false;
+}
+
+function validate_date($date, $format = 'Y-m-d') {
+    $d = DateTime::createFromFormat($format, $date);
+    return $d && $d->format($format) === $date;
+}
+
+function validate_password($password) {
+    return strlen($password) >= PASSWORD_MIN_LENGTH;
+}
 
 /**
  * Session Security & Timeout Management

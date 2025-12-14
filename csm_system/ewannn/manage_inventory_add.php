@@ -5,23 +5,43 @@ require_once 'includes/header.php';
 
 // Predefined list of categories
 $categories = [
-    "Beaker","Chemical","Circuit Boards","Cleaning Materials","Computer Parts","Cylinder",
-    "Electrical Components","Electronics","Equipment","Flask","Glass Tubing","Glassware",
-    "Measuring Device","Microscope","Miscellaneous","Optics","Power Supply",
-    "Protective Gear","Reagent","Storage Equipment","Thermal Apparatus","Tools"
+    "Beaker",
+    "Chemical",
+    "Circuit Boards",
+    "Cleaning Materials",
+    "Computer Parts",
+    "Cylinder",
+    "Electrical Components",
+    "Electronics",
+    "Equipment",
+    "Flask",
+    "Glass Tubing",
+    "Glassware",
+    "Measuring Device",
+    "Microscope",
+    "Miscellaneous",
+    "Old",
+    "Optics",
+    "Power Supply",
+    "Protective Gear",
+    "Reagent",
+    "Storage Equipment",
+    "Thermal Apparatus",
+    "Tools"
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
+    $description = trim($_POST['description'] ?? '');
     $category = trim($_POST['category']);
     $quantity = intval($_POST['quantity']);
     $condition = $_POST['condition'];
     $status = $_POST['status'];
     $item_condition = $_POST['item_condition']; // 'new' or 'old'
 
-    $stmt = $conn->prepare("INSERT INTO apparatus (name, category, quantity, `condition`, status, item_condition)
-                            VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssisss", $name, $category, $quantity, $condition, $status, $item_condition);
+    $stmt = $conn->prepare("INSERT INTO apparatus (name, description, category, quantity, `condition`, status, item_condition)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssisss", $name, $description, $category, $quantity, $condition, $status, $item_condition);
     $stmt->execute();
 
     add_log($conn, $_SESSION['user_id'], "Add Apparatus", "Added apparatus: $name (Condition: $item_condition)");
@@ -31,121 +51,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <style>
-.form-container {
-    max-width: 750px;
-    margin: 60px auto;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding: 40px 45px;
-    border-top: 6px solid #FF6F00;
-}
+    .form-container {
+        max-width: 750px;
+        margin: 60px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        padding: 40px 45px;
+        border-top: 6px solid #FF6F00;
+    }
 
-.form-container h2 {
-    text-align: center;
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-    margin-bottom: 30px;
-}
+    .form-container h2 {
+        text-align: center;
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
 
-label.form-label {
-    font-weight: 600;
-    color: #333;
-}
+    label.form-label {
+        font-weight: 600;
+        color: #333;
+    }
 
-.form-control, .form-select {
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    transition: border-color 0.3s;
-}
+    .form-control,
+    .form-select {
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        transition: border-color 0.3s;
+    }
 
-.form-control:focus, .form-select:focus {
-    border-color: #FF6F00;
-    box-shadow: none;
-}
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #FF6F00;
+        box-shadow: none;
+    }
 
-.btn {
-    padding: 10px 20px;
-    font-weight: 600;
-    border-radius: 6px;
-    transition: all 0.3s;
-}
+    .btn {
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
 
-.btn-orange {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    border: none;
-    color: #fff;
-}
+    .btn-orange {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        border: none;
+        color: #fff;
+    }
 
-.btn-orange:hover {
-    background: linear-gradient(135deg, #E65100, #FFB74D);
-    transform: translateY(-2px);
-}
+    .btn-orange:hover {
+        background: linear-gradient(135deg, #E65100, #FFB74D);
+        transform: translateY(-2px);
+    }
 
-.btn-outline-secondary {
-    border: 1px solid #FF6F00;
-    color: #FF6F00;
-    transition: all 0.3s;
-}
+    .btn-outline-secondary {
+        border: 1px solid #FF6F00;
+        color: #FF6F00;
+        transition: all 0.3s;
+    }
 
-.btn-outline-secondary:hover {
-    background: #FF6F00;
-    color: #fff;
-    transform: translateY(-2px);
-}
+    .btn-outline-secondary:hover {
+        background: #FF6F00;
+        color: #fff;
+        transform: translateY(-2px);
+    }
 
-.bi {
-    margin-right: 6px;
-}
+    .bi {
+        margin-right: 6px;
+    }
 
-.condition-pills {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
+    .condition-pills {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+    }
 
-.condition-pill {
-    flex: 1;
-    padding: 15px;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-}
+    .condition-pill {
+        flex: 1;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
 
-.condition-pill input[type="radio"] {
-    display: none;
-}
+    .condition-pill input[type="radio"] {
+        display: none;
+    }
 
-.condition-pill:hover {
-    border-color: #FF6F00;
-    background: #fff8e1;
-}
+    .condition-pill:hover {
+        border-color: #FF6F00;
+        background: #fff8e1;
+    }
 
-.condition-pill input[type="radio"]:checked + label {
-    color: #FF6F00;
-    font-weight: 700;
-}
+    .condition-pill input[type="radio"]:checked+label {
+        color: #FF6F00;
+        font-weight: 700;
+    }
 
-.condition-pill.selected {
-    border-color: #FF6F00;
-    background: #fff8e1;
-}
+    .condition-pill.selected {
+        border-color: #FF6F00;
+        background: #fff8e1;
+    }
 
-.condition-pill .icon {
-    font-size: 32px;
-    display: block;
-    margin-bottom: 8px;
-}
+    .condition-pill .icon {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 8px;
+    }
 
-.condition-pill .label {
-    font-weight: 600;
-    font-size: 14px;
-}
+    .condition-pill .label {
+        font-weight: 600;
+        font-size: 14px;
+    }
 </style>
 
 <div class="form-container">
@@ -155,6 +177,11 @@ label.form-label {
         <div class="col-md-6">
             <label class="form-label"><i class="bi bi-journal-text"></i> Name</label>
             <input type="text" name="name" class="form-control" placeholder="Enter apparatus name" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label"><i class="bi bi-file-text"></i> Description</label>
+            <input type="text" name="description" class="form-control" placeholder="Enter description (optional)">
         </div>
 
         <div class="col-md-6">
@@ -190,25 +217,25 @@ label.form-label {
             </select>
         </div>
 
-       <div class="col-12">
-    <label class="form-label"><i class="bi bi-box"></i> Item Condition</label>
-    <div class="condition-pills">
-        <div class="condition-pill" onclick="selectCondition('new')">
-            <input type="radio" name="item_condition" value="new" id="condition_new" required>
-            <label for="condition_new">
-                <span class="icon"><i class="bi bi-plus-circle"></i></span>
-                <span class="label">New Item</span>
-            </label>
+        <div class="col-12">
+            <label class="form-label"><i class="bi bi-box"></i> Item Condition</label>
+            <div class="condition-pills">
+                <div class="condition-pill" onclick="selectCondition('new')">
+                    <input type="radio" name="item_condition" value="new" id="condition_new" required>
+                    <label for="condition_new">
+                        <span class="icon"><i class="bi bi-plus-circle"></i></span>
+                        <span class="label">New Item</span>
+                    </label>
+                </div>
+                <div class="condition-pill" onclick="selectCondition('old')">
+                    <input type="radio" name="item_condition" value="old" id="condition_old" required>
+                    <label for="condition_old">
+                        <span class="icon"><i class="bi bi-box-seam"></i></span>
+                        <span class="label">Used/Old Item</span>
+                    </label>
+                </div>
+            </div>
         </div>
-        <div class="condition-pill" onclick="selectCondition('old')">
-            <input type="radio" name="item_condition" value="old" id="condition_old" required>
-            <label for="condition_old">
-                <span class="icon"><i class="bi bi-box-seam"></i></span>
-                <span class="label">Used/Old Item</span>
-            </label>
-        </div>
-    </div>
-</div>
 
 
         <div class="col-12 text-center mt-4">
@@ -223,15 +250,15 @@ label.form-label {
 </div>
 
 <script>
-function selectCondition(type) {
-    document.querySelectorAll('.condition-pill').forEach(pill => {
-        pill.classList.remove('selected');
-    });
-    
-    const radio = document.getElementById('condition_' + type);
-    radio.checked = true;
-    radio.parentElement.parentElement.classList.add('selected');
-}
+    function selectCondition(type) {
+        document.querySelectorAll('.condition-pill').forEach(pill => {
+            pill.classList.remove('selected');
+        });
+
+        const radio = document.getElementById('condition_' + type);
+        radio.checked = true;
+        radio.parentElement.parentElement.classList.add('selected');
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

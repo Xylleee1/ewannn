@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/header.php';
 
 // Access control
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'assistant'])) {
-    echo "<div class='alert alert-danger text-center mt-5'>Access denied.</div>";
+    echo "<div class='alert alert-warning text-center mt-5'><h4>Access Restricted</h4><p>You do not have permission to view this page.</p></div>";
     require_once __DIR__ . '/includes/footer.php';
     exit();
 }

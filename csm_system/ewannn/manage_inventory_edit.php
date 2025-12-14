@@ -35,116 +35,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <style>
-.form-container {
-    max-width: 750px;
-    margin: 60px auto;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    padding: 40px 45px;
-    border-top: 6px solid #FF6F00;
-}
+    .form-container {
+        max-width: 750px;
+        margin: 60px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        padding: 40px 45px;
+        border-top: 6px solid #FF6F00;
+    }
 
-.form-container h2 {
-    text-align: center;
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-    margin-bottom: 30px;
-}
+    .form-container h2 {
+        text-align: center;
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
 
-label.form-label {
-    font-weight: 600;
-    color: #333;
-}
+    label.form-label {
+        font-weight: 600;
+        color: #333;
+    }
 
-.form-control, .form-select {
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    transition: border-color 0.3s;
-}
+    .form-control,
+    .form-select {
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        transition: border-color 0.3s;
+    }
 
-.form-control:focus, .form-select:focus {
-    border-color: #FF6F00;
-    box-shadow: none;
-}
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #FF6F00;
+        box-shadow: none;
+    }
 
-.btn {
-    padding: 10px 20px;
-    font-weight: 600;
-    border-radius: 6px;
-    transition: all 0.3s;
-}
+    .btn {
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
 
-.btn-orange {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    border: none;
-    color: #fff;
-}
+    .btn-orange {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        border: none;
+        color: #fff;
+    }
 
-.btn-orange:hover {
-    background: linear-gradient(135deg, #E65100, #FFB74D);
-    transform: translateY(-2px);
-}
+    .btn-orange:hover {
+        background: linear-gradient(135deg, #E65100, #FFB74D);
+        transform: translateY(-2px);
+    }
 
-.btn-outline-secondary {
-    border: 1px solid #FF6F00;
-    color: #FF6F00;
-    transition: all 0.3s;
-}
+    .btn-outline-secondary {
+        border: 1px solid #FF6F00;
+        color: #FF6F00;
+        transition: all 0.3s;
+    }
 
-.btn-outline-secondary:hover {
-    background: #FF6F00;
-    color: #fff;
-    transform: translateY(-2px);
-}
+    .btn-outline-secondary:hover {
+        background: #FF6F00;
+        color: #fff;
+        transform: translateY(-2px);
+    }
 
-.bi {
-    margin-right: 6px;
-}
+    .bi {
+        margin-right: 6px;
+    }
 
-.condition-pills {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
+    .condition-pills {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+    }
 
-.condition-pill {
-    flex: 1;
-    padding: 15px;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-align: center;
-}
+    .condition-pill {
+        flex: 1;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
 
-.condition-pill input[type="radio"] {
-    display: none;
-}
+    .condition-pill input[type="radio"] {
+        display: none;
+    }
 
-.condition-pill:hover {
-    border-color: #FF6F00;
-    background: #fff8e1;
-}
+    .condition-pill:hover {
+        border-color: #FF6F00;
+        background: #fff8e1;
+    }
 
-.condition-pill.selected {
-    border-color: #FF6F00;
-    background: #fff8e1;
-}
+    .condition-pill.selected {
+        border-color: #FF6F00;
+        background: #fff8e1;
+    }
 
-.condition-pill .icon {
-    font-size: 32px;
-    display: block;
-    margin-bottom: 8px;
-}
+    .condition-pill .icon {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 8px;
+    }
 
-.condition-pill .label {
-    font-weight: 600;
-    font-size: 14px;
-}
+    .condition-pill .label {
+        font-weight: 600;
+        font-size: 14px;
+    }
 </style>
 
 <div class="form-container">
@@ -153,20 +155,26 @@ label.form-label {
     <form method="POST" class="row g-3">
         <div class="col-md-6">
             <label class="form-label"><i class="bi bi-journal-text"></i> Name</label>
-            <input type="text" name="name" class="form-control" 
-                   value="<?= htmlspecialchars($row['name']); ?>" required>
+            <input type="text" name="name" class="form-control" value="<?= htmlspecialchars($row['name']); ?>" required>
         </div>
 
         <div class="col-md-6">
             <label class="form-label"><i class="bi bi-tags"></i> Category</label>
-            <input type="text" name="category" class="form-control" 
-                   value="<?= htmlspecialchars($row['category']); ?>" required>
+            <select name="category" class="form-select" required>
+                <?php
+                $categories = ["Beaker", "Chemical", "Circuit Boards", "Cleaning Materials", "Computer Parts", "Cylinder", "Electrical Components", "Electronics", "Equipment", "Flask", "Glass Tubing", "Glassware", "Measuring Device", "Microscope", "Miscellaneous", "Old", "Optics", "Power Supply", "Protective Gear", "Reagent", "Storage Equipment", "Thermal Apparatus", "Tools"];
+                foreach ($categories as $cat) {
+                    $selected = ($row['category'] == $cat) ? 'selected' : '';
+                    echo "<option value='" . htmlspecialchars($cat) . "' $selected>" . htmlspecialchars($cat) . "</option>";
+                }
+                ?>
+            </select>
         </div>
 
         <div class="col-md-6">
             <label class="form-label"><i class="bi bi-hash"></i> Quantity</label>
             <input type="number" name="quantity" class="form-control" min="1"
-                   value="<?= htmlspecialchars($row['quantity']); ?>" required>
+                value="<?= htmlspecialchars($row['quantity']); ?>" required>
         </div>
 
         <div class="col-md-6">
@@ -188,17 +196,19 @@ label.form-label {
         <div class="col-12">
             <label class="form-label"><i class="bi bi-box"></i> Item Condition</label>
             <div class="condition-pills">
-                <div class="condition-pill <?= ($row['item_condition'] === 'new') ? 'selected' : ''; ?>" onclick="selectCondition('new')">
-                    <input type="radio" name="item_condition" value="new" id="condition_new" 
-                           <?= ($row['item_condition'] === 'new') ? 'checked' : ''; ?> required>
+                <div class="condition-pill <?= ($row['item_condition'] === 'new') ? 'selected' : ''; ?>"
+                    onclick="selectCondition('new')">
+                    <input type="radio" name="item_condition" value="new" id="condition_new"
+                        <?= ($row['item_condition'] === 'new') ? 'checked' : ''; ?> required>
                     <label for="condition_new">
                         <span class="icon">🆕</span>
                         <span class="label">New Item</span>
                     </label>
                 </div>
-                <div class="condition-pill <?= ($row['item_condition'] === 'old') ? 'selected' : ''; ?>" onclick="selectCondition('old')">
-                    <input type="radio" name="item_condition" value="old" id="condition_old" 
-                           <?= ($row['item_condition'] === 'old') ? 'checked' : ''; ?> required>
+                <div class="condition-pill <?= ($row['item_condition'] === 'old') ? 'selected' : ''; ?>"
+                    onclick="selectCondition('old')">
+                    <input type="radio" name="item_condition" value="old" id="condition_old"
+                        <?= ($row['item_condition'] === 'old') ? 'checked' : ''; ?> required>
                     <label for="condition_old">
                         <span class="icon">📦</span>
                         <span class="label">Used/Old Item</span>
@@ -219,15 +229,15 @@ label.form-label {
 </div>
 
 <script>
-function selectCondition(type) {
-    document.querySelectorAll('.condition-pill').forEach(pill => {
-        pill.classList.remove('selected');
-    });
-    
-    const radio = document.getElementById('condition_' + type);
-    radio.checked = true;
-    radio.parentElement.parentElement.classList.add('selected');
-}
+    function selectCondition(type) {
+        document.querySelectorAll('.condition-pill').forEach(pill => {
+            pill.classList.remove('selected');
+        });
+
+        const radio = document.getElementById('condition_' + type);
+        radio.checked = true;
+        radio.parentElement.parentElement.classList.add('selected');
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

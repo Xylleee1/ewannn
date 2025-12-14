@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/header.php';
 
 // Access control
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    echo "<div class='alert alert-danger text-center mt-5'>Access denied. Admin only.</div>";
+    echo "<div class='alert alert-warning text-center mt-5'><h4>Access Restricted</h4><p>You do not have permission to view this page. Administrator access only.</p></div>";
     require_once __DIR__ . '/includes/footer.php';
     exit();
 }
@@ -16,14 +16,14 @@ $msgClass = "";
 // Handle CSV Import
 if (isset($_POST['import_apparatus']) && isset($_FILES['csv_file'])) {
     $file = $_FILES['csv_file'];
-    
+
     if ($file['error'] === 0) {
         $handle = fopen($file['tmp_name'], 'r');
         $header = fgetcsv($handle);
-        
+
         $imported = 0;
         $errors = 0;
-        
+
         while (($row = fgetcsv($handle)) !== false) {
             if (count($row) >= 5) {
                 $name = mysqli_real_escape_string($conn, trim($row[0]));
@@ -31,10 +31,10 @@ if (isset($_POST['import_apparatus']) && isset($_FILES['csv_file'])) {
                 $quantity = intval($row[2]);
                 $condition = mysqli_real_escape_string($conn, trim($row[3]));
                 $status = mysqli_real_escape_string($conn, trim($row[4]));
-                
+
                 $query = "INSERT INTO apparatus (name, category, quantity, `condition`, status) 
                           VALUES ('$name', '$category', $quantity, '$condition', '$status')";
-                
+
                 if (mysqli_query($conn, $query)) {
                     $imported++;
                 } else {
@@ -42,9 +42,9 @@ if (isset($_POST['import_apparatus']) && isset($_FILES['csv_file'])) {
                 }
             }
         }
-        
+
         fclose($handle);
-        
+
         $message = "Import completed: $imported items imported, $errors errors.";
         $msgClass = $errors > 0 ? "warning" : "success";
         add_log($conn, $_SESSION['user_id'], "Bulk Import", "Imported $imported apparatus items");
@@ -58,13 +58,13 @@ if (isset($_POST['import_apparatus']) && isset($_FILES['csv_file'])) {
 if (isset($_POST['bulk_approve'])) {
     $request_ids = $_POST['request_ids'] ?? [];
     $approved = 0;
-    
+
     foreach ($request_ids as $id) {
         $id = intval($id);
         mysqli_query($conn, "UPDATE borrow_requests SET status='approved' WHERE request_id=$id");
         $approved++;
     }
-    
+
     $message = "Bulk approval completed: $approved requests approved.";
     $msgClass = "success";
     add_log($conn, $_SESSION['user_id'], "Bulk Approve", "Approved $approved requests");
@@ -73,12 +73,12 @@ if (isset($_POST['bulk_approve'])) {
 // Handle Export
 if (isset($_GET['export'])) {
     $type = $_GET['export'];
-    
+
     header('Content-Type: text/csv');
     header('Content-Disposition: attachment; filename="' . $type . '_export_' . date('Y-m-d') . '.csv"');
-    
+
     $output = fopen('php://output', 'w');
-    
+
     if ($type === 'apparatus') {
         fputcsv($output, ['ID', 'Name', 'Category', 'Quantity', 'Condition', 'Status']);
         $result = mysqli_query($conn, "SELECT * FROM apparatus ORDER BY apparatus_id");
@@ -126,7 +126,7 @@ if (isset($_GET['export'])) {
             ]);
         }
     }
-    
+
     fclose($output);
     exit();
 }
@@ -144,137 +144,139 @@ $pending_requests = mysqli_query($conn, "
 ?>
 
 <style>
-.page-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 3px solid #FF6F00;
-}
-.page-header h2 {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-size: 26px;
-    margin: 0;
-    font-weight: 700;
-}
+    .page-header {
+        margin-bottom: 28px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #FF6F00;
+    }
 
-.operations-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
-    margin-bottom: 32px;
-}
+    .page-header h2 {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 26px;
+        margin: 0;
+        font-weight: 700;
+    }
 
-.operation-card {
-    background: #fff;
-    padding: 28px;
-    border-radius: 14px;
-    box-shadow: 0 3px 12px rgba(255,111,0,0.08);
-}
+    .operations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
 
-.operation-card h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+    .operation-card {
+        background: #fff;
+        padding: 28px;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(255, 111, 0, 0.08);
+    }
 
-.operation-card p {
-    color: #666;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
+    .operation-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-.btn-primary {
-    background: linear-gradient(135deg, #FF6B00, #FF3D00);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.3s;
-}
+    .operation-card p {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255,111,0,0.35);
-}
+    .btn-primary {
+        background: linear-gradient(135deg, #FF6B00, #FF3D00);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
 
-.btn-success {
-    background: #16A34A;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-}
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 111, 0, 0.35);
+    }
 
-.form-group {
-    margin-bottom: 20px;
-}
+    .btn-success {
+        background: #16A34A;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #333;
-}
+    .form-group {
+        margin-bottom: 20px;
+    }
 
-.form-group input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    border: 2px dashed #ddd;
-    border-radius: 8px;
-    cursor: pointer;
-}
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
+    .form-group input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+    }
 
-.table thead {
-    background: linear-gradient(135deg, #FF6F00, #FFA040);
-    color: #fff;
-}
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-.table th, .table td {
-    padding: 12px;
-    text-align: left;
-    font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
-}
+    .table thead {
+        background: linear-gradient(135deg, #FF6F00, #FFA040);
+        color: #fff;
+    }
 
-.table tbody tr:hover {
-    background: #fafafa;
-}
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: left;
+        font-size: 14px;
+        border-bottom: 1px solid #f0f0f0;
+    }
 
-.bulk-actions {
-    margin-bottom: 20px;
-    padding: 16px;
-    background: #fff8e1;
-    border-radius: 8px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-}
+    .table tbody tr:hover {
+        background: #fafafa;
+    }
 
-.info-box {
-    background: #fff8e1;
-    border-left: 4px solid #FF6F00;
-    padding: 12px;
-    margin-bottom: 20px;
-    border-radius: 4px;
-    font-size: 13px;
-    color: #555;
-}
+    .bulk-actions {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #fff8e1;
+        border-radius: 8px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .info-box {
+        background: #fff8e1;
+        border-left: 4px solid #FF6F00;
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #555;
+    }
 </style>
 
 <div class="page-header">
@@ -282,7 +284,7 @@ $pending_requests = mysqli_query($conn, "
 </div>
 
 <?php if ($message): ?>
-<div class="alert alert-<?= $msgClass ?> mb-4"><?= $message ?></div>
+    <div class="alert alert-<?= $msgClass ?> mb-4"><?= $message ?></div>
 <?php endif; ?>
 
 <div class="operations-grid">
@@ -290,12 +292,12 @@ $pending_requests = mysqli_query($conn, "
     <div class="operation-card">
         <h3><i class="bi bi-upload"></i> Import Apparatus</h3>
         <p>Upload a CSV file to import multiple apparatus items at once.</p>
-        
+
         <div class="info-box">
             <i class="bi bi-info-circle"></i>
             CSV Format: Name, Category, Quantity, Condition, Status
         </div>
-        
+
         <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label>Select CSV File</label>
@@ -305,19 +307,19 @@ $pending_requests = mysqli_query($conn, "
                 <i class="bi bi-upload"></i> Import CSV
             </button>
         </form>
-        
+
         <hr style="margin: 20px 0;">
-        
+
         <a href="assets/apparatus_template.csv" class="btn-primary" download>
             <i class="bi bi-download"></i> Download Template
         </a>
     </div>
-    
+
     <!-- Export Data -->
     <div class="operation-card">
         <h3><i class="bi bi-download"></i> Export Data</h3>
         <p>Download system data as CSV files for backup or analysis.</p>
-        
+
         <div style="display: flex; flex-direction: column; gap: 10px;">
             <a href="?export=apparatus" class="btn-primary">
                 <i class="bi bi-box-seam"></i> Export Apparatus
@@ -330,18 +332,19 @@ $pending_requests = mysqli_query($conn, "
             </a>
         </div>
     </div>
-    
+
     <!-- Database Backup -->
     <div class="operation-card">
         <h3><i class="bi bi-database"></i> Database Backup</h3>
         <p>Create a complete backup of the system database.</p>
-        
+
         <div class="info-box">
             <i class="bi bi-info-circle"></i>
             Backup includes all tables and data.
         </div>
-        
-        <button class="btn-primary" onclick="alert('Database backup feature requires server configuration. Please contact your system administrator.')">
+
+        <button class="btn-primary"
+            onclick="alert('The database backup feature is currently being configured by the administrator. Please try again later.')">
             <i class="bi bi-hdd"></i> Create Backup
         </button>
     </div>
@@ -349,73 +352,74 @@ $pending_requests = mysqli_query($conn, "
 
 <!-- Bulk Approve Requests -->
 <?php if (mysqli_num_rows($pending_requests) > 0): ?>
-<div class="operation-card">
-    <h3><i class="bi bi-check-all"></i> Bulk Approve Requests</h3>
-    <p>Select multiple pending requests to approve at once.</p>
-    
-    <form method="POST">
-        <div class="bulk-actions">
-            <button type="button" onclick="selectAll()" class="btn-primary">
-                <i class="bi bi-check-square"></i> Select All
-            </button>
-            <button type="button" onclick="deselectAll()" class="btn-primary">
-                <i class="bi bi-square"></i> Deselect All
-            </button>
-            <button type="submit" name="bulk_approve" class="btn-success">
-                <i class="bi bi-check-circle"></i> Approve Selected
-            </button>
-        </div>
-        
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th width="50">
-                            <input type="checkbox" id="select_all">
-                        </th>
-                        <th>ID</th>
-                        <th>Student</th>
-                        <th>Apparatus</th>
-                        <th>Quantity</th>
-                        <th>Date Needed</th>
-                        <th>Date Requested</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($pending_requests)): ?>
-                    <tr>
-                        <td>
-                            <input type="checkbox" name="request_ids[]" value="<?= $row['request_id'] ?>" class="request_checkbox">
-                        </td>
-                        <td>#<?= $row['request_id'] ?></td>
-                        <td><?= htmlspecialchars($row['student_name']) ?></td>
-                        <td><?= htmlspecialchars($row['apparatus_name']) ?></td>
-                        <td><?= $row['quantity'] ?></td>
-                        <td><?= date('M d, Y', strtotime($row['date_needed'])) ?></td>
-                        <td><?= date('M d, Y', strtotime($row['date_requested'])) ?></td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-    </form>
-</div>
+    <div class="operation-card">
+        <h3><i class="bi bi-check-all"></i> Bulk Approve Requests</h3>
+        <p>Select multiple pending requests to approve at once.</p>
+
+        <form method="POST">
+            <div class="bulk-actions">
+                <button type="button" onclick="selectAll()" class="btn-primary">
+                    <i class="bi bi-check-square"></i> Select All
+                </button>
+                <button type="button" onclick="deselectAll()" class="btn-primary">
+                    <i class="bi bi-square"></i> Deselect All
+                </button>
+                <button type="submit" name="bulk_approve" class="btn-success">
+                    <i class="bi bi-check-circle"></i> Approve Selected
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" id="select_all">
+                            </th>
+                            <th>ID</th>
+                            <th>Student</th>
+                            <th>Apparatus</th>
+                            <th>Quantity</th>
+                            <th>Date Needed</th>
+                            <th>Date Requested</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = mysqli_fetch_assoc($pending_requests)): ?>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="request_ids[]" value="<?= $row['request_id'] ?>"
+                                        class="request_checkbox">
+                                </td>
+                                <td>#<?= $row['request_id'] ?></td>
+                                <td><?= htmlspecialchars($row['student_name']) ?></td>
+                                <td><?= htmlspecialchars($row['apparatus_name']) ?></td>
+                                <td><?= $row['quantity'] ?></td>
+                                <td><?= date('M d, Y', strtotime($row['date_needed'])) ?></td>
+                                <td><?= date('M d, Y', strtotime($row['date_requested'])) ?></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
 <?php endif; ?>
 
 <script>
-function selectAll() {
-    document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = true);
-    document.getElementById('select_all').checked = true;
-}
+    function selectAll() {
+        document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = true);
+        document.getElementById('select_all').checked = true;
+    }
 
-function deselectAll() {
-    document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = false);
-    document.getElementById('select_all').checked = false;
-}
+    function deselectAll() {
+        document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('select_all').checked = false;
+    }
 
-document.getElementById('select_all')?.addEventListener('change', function() {
-    document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = this.checked);
-});
+    document.getElementById('select_all')?.addEventListener('change', function () {
+        document.querySelectorAll('.request_checkbox').forEach(cb => cb.checked = this.checked);
+    });
 </script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>c
